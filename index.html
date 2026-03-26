@@ -40,6 +40,10 @@
     box-shadow: 0 0 40px rgba(255, 215, 0, 0.25), 0 0 80px rgba(255, 215, 0, 0.1);
     cursor: pointer;
     image-rendering: pixelated;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   #score-bar {
@@ -176,20 +180,12 @@ function flap() {
   vel = -7.5;
 }
 
-function handleInteract() {
-  if (state === 'dead') { doRestart(); return; }
-  flap();
-}
-
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space') { e.preventDefault(); handleInteract(); }
+  if (e.code === 'Space') { e.preventDefault(); flap(); }
 });
 
-// Single unified handler for both click and touch on canvas
-canvas.addEventListener('pointerdown', e => {
-  e.preventDefault();
-  handleInteract();
-});
+canvas.addEventListener('click', flap);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); flap(); }, { passive: false });
 
 // ─── DRAW HELPERS ────────────────────────────────────────────
 
