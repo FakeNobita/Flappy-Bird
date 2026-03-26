@@ -56,6 +56,27 @@
     text-align: center;
   }
 
+  #restart-btn {
+    display: none;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: #1a1a2e;
+    background: linear-gradient(180deg, #FFE033 0%, #FFD700 40%, #b8860b 100%);
+    border: none;
+    border-radius: 6px;
+    padding: 14px 28px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 0 #7a5500, 0 0 18px rgba(255,215,0,0.35);
+    transition: transform 0.08s, box-shadow 0.08s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  #restart-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #7a5500, 0 0 10px rgba(255,215,0,0.2);
+  }
+
   #image-guide {
     position: fixed;
     bottom: 16px;
@@ -84,6 +105,7 @@
   </div>
   <canvas id="canvas" width="360" height="560"></canvas>
   <div id="instructions">SPACE / TAP to flap</div>
+  <button id="restart-btn" onclick="doRestart()">▶ PLAY AGAIN</button>
 </div>
 
 
@@ -140,15 +162,34 @@ function resetGame() {
 }
 
 // ─── INPUT ───────────────────────────────────────────────────
+function doRestart() {
+  resetGame();
+  state = 'idle';
+  document.getElementById('restart-btn').style.display = 'none';
+  document.getElementById('instructions').style.display = 'block';
+  draw();
+}
+
 function flap() {
   if (state === 'dead') return;
   if (state === 'idle') { state = 'playing'; gameLoop(); }
   vel = -7.5;
 }
 
-document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); flap(); } });
-canvas.addEventListener('click', flap);
-canvas.addEventListener('touchstart', e => { e.preventDefault(); flap(); }, { passive: false });
+function handleInteract() {
+  if (state === 'dead') { doRestart(); return; }
+  flap();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); handleInteract(); }
+});
+
+// Single unified handler for both click and touch on canvas
+canvas.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  handleInteract();
+});
 
 // ─── DRAW HELPERS ────────────────────────────────────────────
 
@@ -314,7 +355,7 @@ function drawOverlay() {
 
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = '9px "Press Start 2P"';
-    ctx.fillText('tap to restart', W / 2, H / 2 + 70);
+    ctx.fillText('↓ hit the button below ↓', W / 2, H / 2 + 70);
   }
 }
 
@@ -365,12 +406,11 @@ function update() {
 function die() {
   state = 'dead';
   cancelAnimationFrame(raf);
+  document.getElementById('restart-btn').style.display = 'inline-block';
+  document.getElementById('instructions').style.display = 'none';
 }
 
-// Re-start on tap after death
-canvas.addEventListener('click', () => {
-  if (state === 'dead') { resetGame(); state = 'idle'; draw(); }
-});
+// Remove old click restart listener — now handled by handleInteract()
 
 // ─── RENDER LOOP ─────────────────────────────────────────────
 function draw() {
